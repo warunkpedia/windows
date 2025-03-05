@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Set non-interactive mode
+export DEBIAN_FRONTEND=noninteractive
+
 # Install Docker and Docker Compose
 sudo apt update && sudo apt install -y docker.io docker-compose
 sudo systemctl enable --now docker
