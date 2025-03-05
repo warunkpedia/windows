@@ -6,7 +6,7 @@ RAM_AVAILABLE=$(free -g | awk '/^Mem:/ {print $2}')
 
 # Menentukan jumlah CPU dan RAM yang dibutuhkan
 CPU_REQUIRED=2
-RAM_REQUIRED=4
+RAM_REQUIRED=2
 
 echo "Informasi VPS:"
 echo "CPU tersedia: $CPU_AVAILABLE"
