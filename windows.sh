@@ -1,5 +1,25 @@
 #!/bin/bash
 
+# Cek informasi CPU dan RAM VPS
+CPU_AVAILABLE=$(nproc)
+RAM_AVAILABLE=$(free -g | awk '/^Mem:/ {print $2}')
+
+# Menentukan jumlah CPU dan RAM yang dibutuhkan
+CPU_REQUIRED=2
+RAM_REQUIRED=4
+
+echo "Informasi VPS:"
+echo "CPU tersedia: $CPU_AVAILABLE"
+echo "RAM tersedia: $RAM_AVAILABLE GB"
+
+# Memeriksa apakah CPU dan RAM VPS sudah sesuai dengan yang dibutuhkan
+if [[ $CPU_AVAILABLE -ge $CPU_REQUIRED && $RAM_AVAILABLE -ge $RAM_REQUIRED ]]; then
+    echo "VPS memenuhi syarat: CPU >= $CPU_REQUIRED dan RAM >= $RAM_REQUIRED."
+else
+    echo "VPS tidak memenuhi syarat: membutuhkan setidaknya $CPU_REQUIRED CPU dan $RAM_REQUIRED GB RAM."
+    exit 1
+fi
+
 # Cek apakah Docker sudah terinstal
 if ! command -v docker &> /dev/null; then
     echo "Docker tidak ditemukan. Menginstal Docker..."
@@ -43,8 +63,8 @@ case $WINDOWS_CHOICE in
 esac
 
 # Default konfigurasi
-CPU_COUNT=1
-RAM_SIZE=1
+CPU_COUNT=2  # CPU yang dibutuhkan
+RAM_SIZE=4   # RAM yang dibutuhkan
 WINDOWS_LANG="en-US"
 WINDOWS_USER="Administrator"
 WINDOWS_PASS="SYRA@STORE"  # Password default Windows
