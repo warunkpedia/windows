@@ -64,7 +64,7 @@ esac
 
 # Default konfigurasi
 CPU_COUNT=2  # CPU yang dibutuhkan
-RAM_SIZE=4   # RAM yang dibutuhkan
+RAM_SIZE=2   # RAM yang dibutuhkan
 WINDOWS_LANG="en-US"
 WINDOWS_USER="Administrator"
 WINDOWS_PASS="SYRA@STORE"  # Password default Windows
