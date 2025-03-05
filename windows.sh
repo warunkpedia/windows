@@ -36,10 +36,11 @@ docker pull dockurr/windows
 # Run Windows Server container with custom image
 docker run -d \
   --name "$CONTAINER_NAME" \
-  --env IMG_PATH="$IMAGE_PATH" \
+  --env IMG_PATH="/mnt/windows.img" \
   --env RAM_SIZE="2G" \
   --device /dev/kvm \
   --cap-add NET_ADMIN \
+  -v "$IMAGE_PATH":/mnt/windows.img \
   -p 8006:8006 \
   -p 55555:55555/tcp \
   -p 55555:55555/udp \
