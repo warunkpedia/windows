@@ -42,14 +42,12 @@ case $WINDOWS_CHOICE in
     *) echo "Pilihan tidak valid, menggunakan Windows 11 Pro sebagai default."; WINDOWS_VERSION="11" ;;
 esac
 
-# Menetapkan password default
-WINDOWS_PASS="SYRA@STORE"
-
-# Default CPU, RAM, bahasa, dan username
+# Default konfigurasi
 CPU_COUNT=1
 RAM_SIZE=1
 WINDOWS_LANG="en-US"
 WINDOWS_USER="Administrator"
+WINDOWS_PASS="SYRA@STORE"  # Password default Windows
 
 # Menjalankan Docker dengan konfigurasi yang dipilih
 docker run -it --rm -p 8006:8006 \
