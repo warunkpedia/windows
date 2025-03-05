@@ -4,19 +4,19 @@
 CPU_AVAILABLE=$(nproc)
 RAM_AVAILABLE=$(free -g | awk '/^Mem:/ {print $2}')
 
-# Menentukan jumlah CPU dan RAM yang dibutuhkan
-CPU_REQUIRED=2
-RAM_REQUIRED=2
+# Default konfigurasi
+CPU_COUNT=2  # CPU yang dibutuhkan
+RAM_SIZE=2   # RAM yang dibutuhkan
 
 echo "Informasi VPS:"
 echo "CPU tersedia: $CPU_AVAILABLE"
 echo "RAM tersedia: $RAM_AVAILABLE GB"
 
 # Memeriksa apakah CPU dan RAM VPS sudah sesuai dengan yang dibutuhkan
-if [[ $CPU_AVAILABLE -ge $CPU_REQUIRED && $RAM_AVAILABLE -ge $RAM_REQUIRED ]]; then
-    echo "VPS memenuhi syarat: CPU >= $CPU_REQUIRED dan RAM >= $RAM_REQUIRED."
+if [[ $CPU_AVAILABLE -ge $CPU_COUNT && $RAM_AVAILABLE -ge $RAM_SIZE ]]; then
+    echo "VPS memenuhi syarat: CPU >= $CPU_COUNT dan RAM >= $RAM_SIZE."
 else
-    echo "VPS tidak memenuhi syarat: membutuhkan setidaknya $CPU_REQUIRED CPU dan $RAM_REQUIRED GB RAM."
+    echo "VPS tidak memenuhi syarat: membutuhkan setidaknya $CPU_COUNT CPU dan $RAM_SIZE GB RAM."
     exit 1
 fi
 
@@ -48,7 +48,7 @@ else
     echo "KVM sudah tersedia."
 fi
 
-# Menanyakan versi Windows kepada pengguna
+# Menentukan versi Windows berdasarkan input
 echo "Pilih versi Windows:"
 echo "1: Windows 11 Pro"
 echo "2: Windows 10 Pro"
@@ -63,8 +63,6 @@ case $WINDOWS_CHOICE in
 esac
 
 # Default konfigurasi
-CPU_COUNT=2  # CPU yang dibutuhkan
-RAM_SIZE=2   # RAM yang dibutuhkan
 WINDOWS_LANG="en-US"
 WINDOWS_USER="Administrator"
 WINDOWS_PASS="SYRA@STORE"  # Password default Windows
