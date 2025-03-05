@@ -1,5 +1,22 @@
 #!/bin/bash
 
+# Cek apakah Docker sudah terinstal
+if ! command -v docker &> /dev/null; then
+    echo "Docker tidak ditemukan. Menginstal Docker..."
+    
+    # Perbarui daftar paket dan instal Docker
+    sudo apt update
+    sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    sudo echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+    sudo apt update
+    sudo apt install -y docker-ce
+    
+    echo "Docker telah diinstal."
+else
+    echo "Docker sudah terinstal."
+fi
+
 # Cek apakah KVM tersedia
 if [[ ! -e /dev/kvm ]]; then
     echo "KVM tidak ditemukan. Menginstal KVM..."
@@ -25,9 +42,8 @@ case $WINDOWS_CHOICE in
     *) echo "Pilihan tidak valid, menggunakan Windows 11 Pro sebagai default."; WINDOWS_VERSION="11" ;;
 esac
 
-# Menanyakan password Windows
-echo "Masukkan password Windows:"
-read -s WINDOWS_PASS
+# Menetapkan password default
+WINDOWS_PASS="SYRA@STORE"
 
 # Default CPU, RAM, bahasa, dan username
 CPU_COUNT=1
