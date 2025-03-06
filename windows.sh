@@ -185,6 +185,27 @@ print_status "Starting Windows container..."
 cd /opt/windows-vm
 docker-compose up -d
 
+# Wait for container to be ready
+print_status "Menunggu container siap..."
+sleep 10
+
+# Check if container is running
+if ! docker ps | grep -q "${VPS_NAME}"; then
+    print_error "Container gagal start. Mengecek logs..."
+    docker logs ${VPS_NAME}
+    print_error "Silahkan cek error diatas dan pastikan VPS mendukung KVM"
+    exit 1
+fi
+
+# Get container status
+CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' ${VPS_NAME})
+if [ "$CONTAINER_STATUS" != "running" ]; then
+    print_error "Container status: $CONTAINER_STATUS"
+    print_error "Container gagal berjalan normal"
+    docker logs ${VPS_NAME}
+    exit 1
+fi
+
 # Get server IP
 SERVER_IP=$(curl -s ifconfig.me)
 
