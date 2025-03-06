@@ -138,7 +138,7 @@ services:
     image: dockurr/windows
     container_name: ${VPS_NAME}
     environment:
-      RAM_SIZE: "1"
+      RAM_SIZE: "1G"
       CPU_CORES: "1"
       USERNAME: "administrator"
       PASSWORD: "SYRA@STORE"
@@ -150,6 +150,7 @@ services:
       - /dev/net/tun
     cap_add:
       - NET_ADMIN
+    privileged: true
     ports:
       - 8006:8006
       - 55555:3389/tcp
