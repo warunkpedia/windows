@@ -127,8 +127,8 @@ services:
     image: dockurr/windows
     container_name: ${VPS_NAME}
     environment:
-      RAM_SIZE: "0"
-      CPU_CORES: "0"
+      RAM_SIZE: "512M"
+      CPU_CORES: "1"
       USERNAME: "administrator"
       PASSWORD: "SYRA@STORE"
       LANGUAGE: "English"
@@ -162,15 +162,18 @@ print_status "Starting Windows container..."
 cd /opt/windows-vm
 docker-compose up -d
 
+# Get server IP
+SERVER_IP=$(curl -s ifconfig.me)
+
+# Clear screen before showing connection info
+clear
+
 # Print connection information
-print_status "Windows container is starting..."
-print_status "Container name: ${VPS_NAME}"
-print_status "You can access the Windows VM using:"
-print_status "- Web interface: http://YOUR-SERVER-IP:8006"
-print_status "- RDP: YOUR-SERVER-IP:55555"
-print_status "Credentials:"
-print_status "- Username: administrator"
-print_status "- Password: SYRA@STORE"
-print_status "Initial setup may take several minutes. Please be patient."
-print_status "Check container status with: docker ps"
-print_status "View logs with: docker logs windows" 
+print_status "----------------------------------------"
+print_status "IP: ${SERVER_IP}:55555"
+print_status "Username: administrator"
+print_status "Password: SYRA@STORE"
+print_status "----------------------------------------"
+print_status "Note:"
+print_status "Silahkan cek proses instalasi di browser [http://${SERVER_IP}:8006]"
+print_status "Proses instalasi memakan waktu 10-30 menit" 
