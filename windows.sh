@@ -138,7 +138,7 @@ services:
     image: dockurr/windows
     container_name: ${VPS_NAME}
     environment:
-      RAM_SIZE: "1G"
+      RAM_SIZE: "2G"
       CPU_CORES: "1"
       USERNAME: "administrator"
       PASSWORD: "SYRA@STORE"
@@ -148,9 +148,17 @@ services:
     devices:
       - /dev/kvm
       - /dev/net/tun
+      - /dev/vhost-net
+    device_cgroup_rules:
+      - 'c *:* rwm'
     cap_add:
       - NET_ADMIN
+      - SYS_ADMIN
     privileged: true
+    security_opt:
+      - seccomp=unconfined
+    volumes:
+      - /opt/windows-vm/storage:/storage
     ports:
       - 8006:8006
       - 55555:3389/tcp
@@ -158,6 +166,9 @@ services:
     restart: always
     stop_grace_period: 2m
 EOL
+
+# Create storage directory
+mkdir -p /opt/windows-vm/storage
 
 # Check if KVM is available and try to install if not
 if [ ! -e /dev/kvm ]; then
