@@ -118,6 +118,17 @@ mkdir -p /opt/windows-vm
 # Get VPS hostname
 VPS_NAME=$(hostname)
 
+# Setup swap memory
+print_status "Setting up swap memory..."
+if [ ! -f /swapfile ]; then
+    fallocate -l 2G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    print_status "Swap memory created and enabled"
+fi
+
 # Create docker-compose.yml
 print_status "Creating Docker Compose configuration..."
 cat > /opt/windows-vm/docker-compose.yml << EOL
@@ -127,7 +138,7 @@ services:
     image: dockurr/windows
     container_name: ${VPS_NAME}
     environment:
-      RAM_SIZE: "512M"
+      RAM_SIZE: "1"
       CPU_CORES: "1"
       USERNAME: "administrator"
       PASSWORD: "SYRA@STORE"
