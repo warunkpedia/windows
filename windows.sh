@@ -1,49 +1,176 @@
 #!/bin/bash
 
-# Set non-interactive mode
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Set noninteractive mode for apt
 export DEBIAN_FRONTEND=noninteractive
 
-# Install Docker and Docker Compose
-sudo apt update && sudo apt install -y docker.io docker-compose
-sudo systemctl enable --now docker
+# Function to print status messages
+print_status() {
+    echo -e "${GREEN}[*] $1${NC}"
+}
 
-# Define Windows Custom Image URL
-WINDOWS_IMAGE_URL="159.65.128.155/win10.gz"
-WINDOWS_IMAGE_PATH="/root/windows-custom.gz"
+# Function to print error messages
+print_error() {
+    echo -e "${RED}[!] $1${NC}"
+}
 
-# Extract name from URL (remove path and extension)
-CONTAINER_NAME=$(basename "$WINDOWS_IMAGE_URL" .gz)
-IMAGE_PATH="/root/$CONTAINER_NAME.img"
+# Function to print warning messages
+print_warning() {
+    echo -e "${YELLOW}[!] $1${NC}"
+}
 
-# Download Windows Custom Image
-wget -O "$WINDOWS_IMAGE_PATH" "$WINDOWS_IMAGE_URL"
+# Function to check and install KVM
+check_and_install_kvm() {
+    # Check if CPU supports virtualization
+    if grep -E 'vmx|svm' /proc/cpuinfo > /dev/null; then
+        print_status "CPU supports virtualization"
+        
+        # Install KVM packages with auto accept
+        print_status "Installing KVM packages..."
+        apt-get install -y \
+            qemu-kvm \
+            libvirt-daemon-system \
+            libvirt-clients \
+            bridge-utils \
+            cpu-checker < /dev/null
 
-# Extract Windows Custom Image
-gunzip -c "$WINDOWS_IMAGE_PATH" > "$IMAGE_PATH"
+        # Add current user to libvirt group
+        usermod -aG libvirt $USER
+        usermod -aG kvm $USER
 
-# Detect extracted file type
-FILE_TYPE=$(file --mime-type -b "$IMAGE_PATH")
+        # Start and enable libvirtd
+        systemctl enable --now libvirtd
 
-# Validate extracted file type
-if [[ "$FILE_TYPE" != "application/octet-stream" ]]; then
-  echo "Error: Extracted file is not a valid disk image. Detected type: $FILE_TYPE"
-  exit 1
+        # Verify KVM installation
+        if kvm-ok > /dev/null 2>&1; then
+            print_status "KVM installation successful"
+            return 0
+        else
+            print_warning "KVM installation completed but may not be working properly"
+            print_warning "Please ensure virtualization is enabled in BIOS/UEFI"
+            return 1
+        fi
+    else
+        print_error "CPU does not support virtualization"
+        print_error "This VPS provider may not support KVM virtualization"
+        return 1
+    fi
+}
+
+# Function to print menu
+print_menu() {
+    echo -e "${BLUE}Select Windows Version:${NC}"
+    echo "1) Windows 11 Pro"
+    echo "2) Windows 10 Pro"
+    echo "3) Windows Server 2012"
+    echo -n "Enter choice [1-3]: "
+}
+
+# Check if script is run as root
+if [ "$EUID" -ne 0 ]; then 
+    print_error "Please run as root"
+    exit 1
 fi
 
-# Pull the Windows Docker image
-docker pull dockurr/windows
+# Select Windows Version
+print_menu
+read choice
 
-# Run Windows Server container with custom image
-docker run -d \
-  --name "$CONTAINER_NAME" \
-  --env IMG_PATH="/mnt/windows.img" \
-  --env RAM_SIZE="2G" \
-  --device /dev/kvm \
-  --cap-add NET_ADMIN \
-  -v "$IMAGE_PATH":/mnt/windows.img \
-  -p 8006:8006 \
-  -p 55555:55555/tcp \
-  -p 55555:55555/udp \
-  dockurr/windows
+case $choice in
+    1)
+        WIN_VERSION="11"
+        ;;
+    2)
+        WIN_VERSION="10"
+        ;;
+    3)
+        WIN_VERSION="2012"
+        ;;
+    *)
+        print_error "Invalid choice. Exiting."
+        exit 1
+        ;;
+esac
 
-echo "Windows Server container ($CONTAINER_NAME) with custom image is running. Access it via http://IP_VPS:8006 or RDP at IP_VPS:55555"
+# Install required packages with auto accept
+print_status "Installing required packages..."
+apt-get update
+apt-get install -y \
+    curl \
+    docker.io \
+    docker-compose < /dev/null
+
+# Start and enable Docker service
+print_status "Starting Docker service..."
+systemctl start docker
+systemctl enable docker
+
+# Create directory for Windows VM
+print_status "Creating directory structure..."
+mkdir -p /opt/windows-vm
+
+# Get VPS hostname
+VPS_NAME=$(hostname)
+
+# Create docker-compose.yml
+print_status "Creating Docker Compose configuration..."
+cat > /opt/windows-vm/docker-compose.yml << EOL
+version: '3'
+services:
+  windows:
+    image: dockurr/windows
+    container_name: ${VPS_NAME}
+    environment:
+      RAM_SIZE: "0"
+      CPU_CORES: "0"
+      USERNAME: "administrator"
+      PASSWORD: "SYRA@STORE"
+      LANGUAGE: "English"
+      DISK_SIZE: "256G"
+      VERSION: "${WIN_VERSION}"
+    devices:
+      - /dev/kvm
+      - /dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 8006:8006
+      - 55555:3389/tcp
+      - 55555:3389/udp
+    restart: always
+    stop_grace_period: 2m
+EOL
+
+# Check if KVM is available and try to install if not
+if [ ! -e /dev/kvm ]; then
+    print_warning "KVM is not detected. Attempting to install KVM..."
+    if ! check_and_install_kvm; then
+        print_error "Failed to setup KVM. This VPS might not support nested virtualization."
+        print_error "Please contact your VPS provider to ensure KVM/nested virtualization is enabled."
+        exit 1
+    fi
+fi
+
+# Start the container
+print_status "Starting Windows container..."
+cd /opt/windows-vm
+docker-compose up -d
+
+# Print connection information
+print_status "Windows container is starting..."
+print_status "Container name: ${VPS_NAME}"
+print_status "You can access the Windows VM using:"
+print_status "- Web interface: http://YOUR-SERVER-IP:8006"
+print_status "- RDP: YOUR-SERVER-IP:55555"
+print_status "Credentials:"
+print_status "- Username: administrator"
+print_status "- Password: SYRA@STORE"
+print_status "Initial setup may take several minutes. Please be patient."
+print_status "Check container status with: docker ps"
+print_status "View logs with: docker logs windows" 
